@@ -16,13 +16,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-
+import org.springframework.web.bind.annotation.CrossOrigin;
 @RestController
 @RequestMapping("/admin/hotels")
 @RequiredArgsConstructor
 @Slf4j
 @SecurityRequirement(name = "BearerAuth")
 @Tag(name = "Hotel Management", description = "Manage hotel details")
+@CrossOrigin(origins = "*")
 public class HotelController {
 
     private final HotelService hotelService;

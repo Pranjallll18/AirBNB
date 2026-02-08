@@ -30,10 +30,10 @@ public class RoomEntity {
     @Column(nullable = false,precision = 10,scale = 2)
     private BigDecimal basePrice;
 
-    @Column(columnDefinition = "TEXT[]")
+    @Lob
     private String[] photos;
 
-    @Column(columnDefinition = "TEXT[]")
+    @Lob
     private String[] amenities;
 
     @Column(nullable = false)

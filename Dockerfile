@@ -1,5 +1,5 @@
 # Use OpenJDK as the base image
-FROM openjdk:23-jdk-slim
+FROM openjdk:21-jdk-slim
 
 # Set the working directory
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN ./mvnw clean package -DskipTests
 RUN cp target/*.jar app.jar
 
 # Expose the application port
-EXPOSE 8080
+EXPOSE 8081
 
 # Run the application
 CMD ["java", "-jar", "app.jar"]

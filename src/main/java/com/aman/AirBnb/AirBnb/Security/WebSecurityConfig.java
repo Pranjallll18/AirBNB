@@ -36,10 +36,20 @@ public class WebSecurityConfig {
                 .sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Allow everyone to VIEW hotels (GET requests) even in the admin path
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/admin/hotels/**").permitAll()
+                        // Place this ABOVE the .hasRole rule
+
+                        // 2. Keep the rest of the admin paths protected for POST, PUT, DELETE
                         .requestMatchers("/admin/**").hasRole("HOTEL_MANAGER")
+
+                        // 3. Keep other private areas protected
                         .requestMatchers("/bookings/**").authenticated()
                         .requestMatchers("/users/**").authenticated()
+
+                        // 4. Everything else is open
                         .anyRequest().permitAll()
+
                 )
                 .exceptionHandling(exHandlingConfig -> exHandlingConfig.accessDeniedHandler(accessDeniedHandler()));
 
