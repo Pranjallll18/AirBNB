@@ -17,7 +17,7 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Airbnb API")
                         .version("1.0")
-                        .description("API documentation for the Airbnb Backend clone application, Created By Aman Kumar"))
+                        .description("API documentation for the Airbnb Backend clone application, Created By Pranjal Tripathi"))
                         .addSecurityItem(new SecurityRequirement().addList("BearerAuth"))
                         .components(new Components()
                                 .addSecuritySchemes("BearerAuth",
