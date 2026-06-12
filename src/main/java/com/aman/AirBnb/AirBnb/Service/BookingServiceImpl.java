@@ -7,7 +7,8 @@ import com.aman.AirBnb.AirBnb.Dto.HotelReportDTO;
 import com.aman.AirBnb.AirBnb.Entities.*;
 import com.aman.AirBnb.AirBnb.Enums.BookingStatus;
 import com.aman.AirBnb.AirBnb.Exceptions.ResourceNotFoundException;
-import com.aman.AirBnb.AirBnb.Exceptions.UnAuthorisedException;
+import com.aman.AirBnb.AirBnb.Exceptions.UnauthorisedException;
+import org.springframework.scheduling.annotation.Scheduled;
 import com.aman.AirBnb.AirBnb.Repositories.*;
 import com.aman.AirBnb.AirBnb.Service.Interfaces.BookingService;
 import com.aman.AirBnb.AirBnb.Service.Interfaces.CheckoutService;
@@ -111,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
         UserEntity user = getCurrentUser();
 
         if (!user.equals(booking.getUser())) {
-            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+            throw new UnauthorisedException("Booking does not belong to this user with id: "+user.getId());
         }
 
         if (hasBookingExpired(booking)) {
@@ -142,7 +143,7 @@ public class BookingServiceImpl implements BookingService {
         );
         UserEntity user = getCurrentUser();
         if (!user.equals(booking.getUser())) {
-            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+            throw new UnauthorisedException("Booking does not belong to this user with id: "+user.getId());
         }
         if (hasBookingExpired(booking)) {
             throw new IllegalStateException("Booking has already expired");
@@ -193,7 +194,7 @@ public class BookingServiceImpl implements BookingService {
         );
         UserEntity user = getCurrentUser();
         if (!user.equals(booking.getUser())) {
-            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+            throw new UnauthorisedException("Booking does not belong to this user with id: "+user.getId());
         }
 
         if(booking.getBookingStatus() != BookingStatus.CONFIRMED) {
@@ -230,7 +231,7 @@ public class BookingServiceImpl implements BookingService {
         );
         UserEntity user = getCurrentUser();
         if (!user.equals(booking.getUser())) {
-            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+            throw new UnauthorisedException("Booking does not belong to this user with id: "+user.getId());
         }
 
         return booking.getBookingStatus();
@@ -296,6 +297,30 @@ public class BookingServiceImpl implements BookingService {
 
     public boolean hasBookingExpired(BookingEntity booking) {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
+    }
+
+    @Scheduled(cron = "0 */5 * * * *")
+    @Transactional
+    public void expireReservedBookings() {
+        log.info("Running scheduled job to expire bookings");
+        LocalDateTime expiryTime = LocalDateTime.now().minusMinutes(10);
+        List<BookingEntity> expiredBookings = bookingRepository.findByBookingStatusInAndCreatedAtBefore(
+                List.of(BookingStatus.RESERVED, BookingStatus.GUESTS_ADDED, BookingStatus.PAYMENTS_PENDING),
+                expiryTime
+        );
+
+        for (BookingEntity booking : expiredBookings) {
+            log.info("Expiring booking with ID: {}", booking.getId());
+            booking.setBookingStatus(BookingStatus.EXPIRED);
+            bookingRepository.save(booking);
+
+            inventoryRepository.releaseReservedRooms(
+                    booking.getRoom().getId(),
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate(),
+                    booking.getRoomsCount()
+            );
+        }
     }
 
 }

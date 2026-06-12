@@ -22,7 +22,7 @@ public class HotelBookingController {
 
     @PostMapping("/init")
     @Operation(summary = "Initialize a new booking", tags = {"Booking Flow"})
-    public ResponseEntity<BookingDTO> initialiseBooking(@RequestBody BookingRequest bookingRequest) {
+    public ResponseEntity<BookingDTO> initialiseBooking(@jakarta.validation.Valid @RequestBody BookingRequest bookingRequest) {
         return ResponseEntity.ok(bookingService.initialiseBooking(bookingRequest));
     }
 

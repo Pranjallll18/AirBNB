@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface HotelRepository extends JpaRepository<HotelEntity,Long> {
-    List<HotelEntity> findByOwner(UserEntity user);
+    org.springframework.data.domain.Page<HotelEntity> findByOwner(UserEntity user, org.springframework.data.domain.Pageable pageable);
 }

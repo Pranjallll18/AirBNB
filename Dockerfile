@@ -1,7 +1,5 @@
-# Use OpenJDK as the base image
-FROM eclipse-temurin:21-jdk-jammy
-
-# Set the working directory
+# Build stage
+FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
 
 # Copy the Maven wrapper and source code
@@ -9,14 +7,14 @@ COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 COPY src/ src/
 
-# Give execute permission to the Maven wrapper
+# Give execute permission to the Maven wrapper and build
 RUN chmod +x mvnw
-
-# Build the application inside the Docker container
 RUN ./mvnw clean package -DskipTests
 
-# Copy the built JAR file
-RUN cp target/*.jar app.jar
+# Run stage
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 
 # Expose the application port
 EXPOSE 8080

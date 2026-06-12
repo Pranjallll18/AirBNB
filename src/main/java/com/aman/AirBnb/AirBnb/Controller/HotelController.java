@@ -16,14 +16,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import org.springframework.web.bind.annotation.CrossOrigin;
 @RestController
 @RequestMapping("/admin/hotels")
 @RequiredArgsConstructor
 @Slf4j
 @SecurityRequirement(name = "BearerAuth")
 @Tag(name = "Hotel Management", description = "Manage hotel details")
-@CrossOrigin(origins = "*")
 public class HotelController {
 
     private final HotelService hotelService;
@@ -67,8 +65,8 @@ public class HotelController {
 
     @GetMapping
     @Operation(summary = "Get all hotels owned by admin",description = "Retrieve a list of all hotels owned by the admin")
-    public ResponseEntity<List<HotelDTO>> getAllHotels() {
-        return ResponseEntity.ok(hotelService.getAllHotels());
+    public ResponseEntity<org.springframework.data.domain.Page<HotelDTO>> getAllHotels(org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(hotelService.getAllHotels(pageable));
     }
 
     @GetMapping("/{hotelId}/bookings")

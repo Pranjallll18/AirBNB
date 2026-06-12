@@ -7,7 +7,7 @@ import com.aman.AirBnb.AirBnb.Entities.HotelEntity;
 import com.aman.AirBnb.AirBnb.Entities.RoomEntity;
 import com.aman.AirBnb.AirBnb.Entities.UserEntity;
 import com.aman.AirBnb.AirBnb.Exceptions.ResourceNotFoundException;
-import com.aman.AirBnb.AirBnb.Exceptions.UnAuthorisedException;
+import com.aman.AirBnb.AirBnb.Exceptions.UnauthorisedException;
 import com.aman.AirBnb.AirBnb.Repositories.HotelRepository;
 import com.aman.AirBnb.AirBnb.Repositories.RoomRepository;
 import com.aman.AirBnb.AirBnb.Service.Interfaces.HotelService;
@@ -40,7 +40,7 @@ public class HotelServiceImpl implements HotelService {
         HotelEntity hotel = modelMapper.map(hotelDto, HotelEntity.class);
         hotel.setActive(false);
 
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUser();
         hotel.setOwner(user);
 
         hotel = hotelRepository.save(hotel);
@@ -55,10 +55,10 @@ public class HotelServiceImpl implements HotelService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: "+id));
 
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUser();
 
         if(!user.equals(hotel.getOwner())) {
-            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+            throw new UnauthorisedException("This user does not own this hotel with id: "+id);
         }
 
         return modelMapper.map(hotel, HotelDTO.class);
@@ -71,9 +71,9 @@ public class HotelServiceImpl implements HotelService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: "+id));
 
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUser();
         if(!user.equals(hotel.getOwner())) {
-            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+            throw new UnauthorisedException("This user does not own this hotel with id: "+id);
         }
 
         modelMapper.map(hotelDto, hotel);
@@ -89,9 +89,9 @@ public class HotelServiceImpl implements HotelService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: "+id));
 
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUser();
         if(!user.equals(hotel.getOwner())) {
-            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+            throw new UnauthorisedException("This user does not own this hotel with id: "+id);
         }
 
         for(RoomEntity room: hotel.getRooms()) {
@@ -109,13 +109,16 @@ public class HotelServiceImpl implements HotelService {
                 .findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: "+hotelId));
 
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUser();
         if(!user.equals(hotel.getOwner())) {
-            throw new UnAuthorisedException("This user does not own this hotel with id: "+hotelId);
+            throw new UnauthorisedException("This user does not own this hotel with id: "+hotelId);
+        }
+
+        if (Boolean.TRUE.equals(hotel.getActive())) {
+            throw new IllegalStateException("Hotel is already active");
         }
 
         hotel.setActive(true);
-        // assuming only do it once
         for(RoomEntity room: hotel.getRooms()) {
             inventoryService.initializeRoomForAYear(room);
         }
@@ -137,14 +140,10 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    public List<HotelDTO> getAllHotels() {
+    public org.springframework.data.domain.Page<HotelDTO> getAllHotels(org.springframework.data.domain.Pageable pageable) {
         UserEntity user = getCurrentUser();
         log.info("Getting all hotels for the admin user with ID: {}", user.getId());
-        List<HotelEntity> hotels = hotelRepository.findByOwner(user);
-
-        return hotels
-                .stream()
-                .map((element) -> modelMapper.map(element, HotelDTO.class))
-                .collect(Collectors.toList());
+        org.springframework.data.domain.Page<HotelEntity> hotels = hotelRepository.findByOwner(user, pageable);
+        return hotels.map((element) -> modelMapper.map(element, HotelDTO.class));
     }
 }

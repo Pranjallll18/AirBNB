@@ -30,17 +30,19 @@ public class AuthController {
 
     @PostMapping("/signup")
     @Operation(summary = "Sign up a new user", description = "Creates a new user account.")
-    public ResponseEntity<UserDTO> signup(@RequestBody SignUpRequestDTO signUpRequestDto) {
+    public ResponseEntity<UserDTO> signup(@jakarta.validation.Valid @RequestBody SignUpRequestDTO signUpRequestDto) {
         return new ResponseEntity<>(authService.signUp(signUpRequestDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticates a user and returns an JWT access token.")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDto, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public ResponseEntity<LoginResponseDTO> login(@jakarta.validation.Valid @RequestBody LoginDTO loginDto, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         String[] tokens = authService.login(loginDto);
 
         Cookie cookie = new Cookie("refreshToken", tokens[1]);
         cookie.setHttpOnly(true);
+        cookie.setSecure(httpServletRequest.isSecure());
+        cookie.setPath("/");
 
         httpServletResponse.addCookie(cookie);
         return ResponseEntity.ok(new LoginResponseDTO(tokens[0]));
@@ -49,7 +51,12 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token", description = "Generates a new access token using a refresh token.")
     public ResponseEntity<LoginResponseDTO> refresh(HttpServletRequest request) {
-        String refreshToken = Arrays.stream(request.getCookies()).
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            throw new AuthenticationServiceException("Refresh token not found inside the Cookies");
+        }
+
+        String refreshToken = Arrays.stream(cookies).
                 filter(cookie -> "refreshToken".equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)

@@ -22,6 +22,16 @@ public interface HotelMinPriceRepository  extends JpaRepository<HotelMinPriceEnt
             WHERE i.hotel.city = :city
                 AND i.date BETWEEN :startDate AND :endDate
                 AND i.hotel.active = true
+                AND i.hotel.id IN (
+                    SELECT DISTINCT inv.hotel.id
+                    FROM InventoryEntity inv
+                    WHERE inv.city = :city
+                        AND inv.date BETWEEN :startDate AND :endDate
+                        AND inv.closed = false
+                        AND (inv.totalCount - inv.bookCount - inv.reservedCount) >= :roomsCount
+                    GROUP BY inv.hotel, inv.room
+                    HAVING COUNT(inv.date) = :dateCount
+                )
            GROUP BY i.hotel
            """)
     Page<HotelPriceDTO> findHotelsWithAvailableInventory(

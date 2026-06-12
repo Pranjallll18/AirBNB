@@ -10,5 +10,5 @@ import java.util.List;
 
 @Repository
 public interface GuestRepository extends JpaRepository<GuestEntity, Long> {
-    List<GuestDTO> findByUser(UserEntity user);
+    List<GuestEntity> findByUser(UserEntity user);
 }

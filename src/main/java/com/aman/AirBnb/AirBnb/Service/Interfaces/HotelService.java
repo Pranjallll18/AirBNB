@@ -12,5 +12,5 @@ public interface HotelService {
     void deleteHotelById(Long id);
     void activateHotel(Long hotelId);
     HotelInfoDto getHotelInfoById(Long hotelId);
-    List<HotelDTO> getAllHotels();
+    org.springframework.data.domain.Page<HotelDTO> getAllHotels(org.springframework.data.domain.Pageable pageable);
 }

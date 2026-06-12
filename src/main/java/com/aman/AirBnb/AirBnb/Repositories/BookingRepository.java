@@ -19,4 +19,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     List<BookingEntity> findByHotelAndCreatedAtBetween(HotelEntity hotel, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
     List<BookingEntity> findByUser(UserEntity user);
+
+    List<BookingEntity> findByBookingStatusInAndCreatedAtBefore(
+            java.util.Collection<com.aman.AirBnb.AirBnb.Enums.BookingStatus> statuses,
+            LocalDateTime dateTime
+    );
 }
